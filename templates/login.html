@@ -1,0 +1,36 @@
+{% extends 'base_unauth.html' %}
+{% block content %}
+{% for message in get_flashed_messages() %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+<h1 class="text-center">Aplikacja do zarządzania podatnościami</h1>
+<br/>
+<h3 class="text-center">Logowanie</h3>
+<br/>
+<br/>
+<br/>
+<div class="row">
+    <div class="col-4">
+    </div>
+    <div class="col-4">
+        <form action="{{ url_for('login')}}" method="POST">
+            <div class="mb-3">
+                <b>{{ form.user_name.label }}</b>
+                {{ form.user_name(class="form-control-plaintext") }}
+            </div>
+            <div class="mb-3">
+                <b>{{ form.password.label }}</b>
+                {{ form.password(class="form-control-plaintext") }}
+            </div>
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-success") }}
+            </div>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock %}

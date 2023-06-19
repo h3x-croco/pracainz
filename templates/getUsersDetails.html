@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if current_user.role == "consultant" %}
+    <h1>Szczegóły użytkownika:</h1>
+    <br/>
+    {{ user[0] }}<br/>
+    {{ user[1] }}
+ 
+
+{% endif %}
+{% endblock %}
+
+

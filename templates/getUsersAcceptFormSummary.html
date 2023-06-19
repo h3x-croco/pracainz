@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if current_user.role == "consultant" %}
+<h1>To jest podsumowanie zaakceptowania użytkownika</h1>
+{{id}}
+{{email}}
+{{role}}
+
+{% endif %}
+{% endblock %}

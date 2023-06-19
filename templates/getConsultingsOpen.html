@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<a href="/getConsultings/open" class="btn btn-primary me-md-2" type="button">Otwarte</a>
+<a href="/getConsultings/open" class="btn btn-outline-success me-md-2" type="button">Moje konsultacje</a>
+
+<br/>
+<br/>
+<h4>Lista zgłoszonych konsultacji</h4>
+<br/>
+
+
+
+
+
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Zasób</th>
+        <th scope="col">Podatność</th>
+        <th scope="col">Zgłosił</th>
+        <th scope="col">Status</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for consult in all_consultings %}
+        {% set id = consult[0] %}
+        {% set host = consult[1] %}
+        {% set title = consult[2] %}
+        {% set owner = consult[6] %}
+        {% set status = consult[5] %}
+
+
+        <tr>
+            <th scope="row">{{ id }}</th>
+            <td>{{ host }}</td>
+            <td>{{ title|truncate(30) }}</td>
+            <td>{{ owner }}</td>
+            <td>{{ status }}</td>
+
+
+            <td>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/getConsultings/{{id}}" class="btn btn-primary me-md-2" type="button">Szczegóły</a>
+                    <form action="{{ url_for('getFalsePositiveAcceptForm', title=title, host=host)}}" method="POST">
+                        <input type="hidden" name="id" value='{{ id }}'>
+                        <input type="hidden" name="title" value='{{ title }}'>
+                        <input type="hidden" name="host" value='{{ host }}'>
+                        <button class="btn btn-success" type="submit">Przypisz do mnie</button>
+                    </form>                                        
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+

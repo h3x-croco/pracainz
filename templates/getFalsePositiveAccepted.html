@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<a href="/getFalsePositive" class="btn btn-success me-md-2" type="button">All</a>
+<a href="/getFalsePositive/open" class="btn btn-secondary me-md-2" type="button">Open</a>
+<a href="/getFalsePositive/accepted" class="btn btn-secondary me-md-2" type="button">Accepted</a>
+<a href="/getFalsePositive/rejected" class="btn btn-secondary me-md-2" type="button">Rejected</a>
+
+<br/>
+<br/>
+<h4>Lista wszystkich false positive ze statusem Accepted</h4>
+<br/>
+
+
+
+
+
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Host</th>
+        <th scope="col">Tytuł</th>
+        <th scope="col">Status</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for fp in all_accepted_false_positives %}
+        {% set id = fp[0] %}
+        {% set host = fp[1] %}
+        {% set title = fp[2] %}
+        {% set status = fp[3] %}
+
+
+        <tr>
+            <th scope="row">{{ fp[0] }}</th>
+            <td>{{ fp[1] }}</td>
+            <td>{{ fp[2] }}</td>
+            {% if fp[3] == 1 %}
+            <td>Accepted</td>
+            {% endif %}
+
+            <td>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/getFalsePositive/{{id}}" class="btn btn-primary me-md-2" type="button">Szczegóły</a>                                        
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+{% endblock %}

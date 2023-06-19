@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if current_user.role == "consultant" %}
+<br/>
+<h3 class="text-center">Formularz odrzucenia użytkownika</h3>
+<br/>
+<br/>
+<br/>
+<div class="row">
+    <div class="col-4">
+    </div>
+    <div class="col-4">
+        <form action="{{ url_for('getUsersRejectFormSummary', id=id, email=email, role=role)}}" method="POST" >
+            
+            
+            <div class="mb-3">
+                <b>{{ form.id.label }}</b>
+                {{ form.id(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <b>{{ form.email.label }}</b>
+                {{ form.email(class="form-control") }}
+            </div>
+            <div class="mb-3"></div>
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-danger") }}
+            </div>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+{% endif %}
+{% endblock %}

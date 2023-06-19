@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>List Twoich zasobów</h1>
+    <br/>
+    {% for host in hosts %}
+        <div class="accordion" id="accordionPanelsStayOpenExample">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="btn btn-success" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target=#{{host}} aria-expanded="true" aria-controls={{host}}>
+                  {{ host }}
+                </button>
+              </h2>
+              <div id={{host}} class="accordion-collapse collapse show">
+                <div class="accordion-body">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Nazwa zasobu</th>
+                            <th scope="col">Podatność</th>
+                            <th scope="col">Priorytet</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for vuln in vulnerabilities %}
+                            {% set id = vuln[0] %}
+                            {% set title = vuln[1] %}
+                            <tr>
+                                <th scope="row">{{ vuln[0] }}</th>
+                                <td>{{ title|truncate(20) }}</td>
+                                <td>{{ vuln[2] }}</td>
+                                {% if id == 3 %}
+                                <td><button type="button" class="btn btn-outline-danger">Wysoki</button></td>
+                                {% endif %}
+                                {% if id == 1 %}
+                                <td><button type="button" class="btn btn-outline-danger">Niski</button></td>
+                                {% endif %}
+                                {% if id == 2 %}
+                                <td><button type="button" class="btn btn-outline-warning">Średni</button></td>
+                                {% endif %}
+
+                                <td>
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <a href="/vulnerabilities/{{id}}" class="btn btn-primary me-md-2" type="button">Szczegóły</a>
+                                        <form action="{{ url_for('requestConsulting', title=vuln, host=host)}}" method="POST">
+                                            <input type="hidden" name="title" value='{{ title }}'>
+                                            <input type="hidden" name="host" value='{{ host }}'>
+                                            <button class="btn btn-secondary" type="submit">Konsultacja</button>
+                                        </form>
+                                        <form action="{{ url_for('reportFalsePositive', title=vuln, host=host)}}" method="POST">
+                                            <input type="hidden" name="title" value='{{ title }}'>
+                                            <input type="hidden" name="host" value='{{ host }}'>
+                                            <button class="btn btn-danger" type="submit">False positive</button>
+                                        </form>                                        
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+              </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}

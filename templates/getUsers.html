@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if current_user.role == "consultant" %}
+
+<a href="/getUsers" class="btn btn-success me-md-2" type="button">All</a>
+<a href="/getUsers/toverify" class="btn btn-secondary me-md-2" type="button">Do weryfikacji</a>
+<a href="/getUsers/consultants" class="btn btn-secondary me-md-2" type="button">Konsultanci</a>
+<a href="/getUsers/admins" class="btn btn-secondary me-md-2" type="button">Administratorzy</a>
+
+<br/>
+<br/>
+<h4>Lista użytkowników systemu</h4>
+<br/>
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">ID</th>
+        <th scope="col">E-mail</th>
+        <th scope="col">Rola</th>
+        <th scope="col">Status</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for user in all_get_users %}
+        {% set id = user[0] %}
+        {% set email = user[1] %}
+        {% set rola = user[3] %}
+        {% set status = user[4] %}
+
+
+        <tr>
+            <th scope="row">{{ id }}</th>
+            <td>{{ email }}</td>
+            <td>{{ rola }}</td>
+            <td>{{ status }}</td>
+            <td>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/getUsers/{{id}}" class="btn btn-primary me-md-2" type="button">Szczegóły</a>                                      
+                </div>
+            </td>
+        </tr>
+
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <h1>Nie masz uprawnien</h1>
+{% endif %}
+
+{% endblock %}

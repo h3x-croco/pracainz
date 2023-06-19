@@ -1,0 +1,36 @@
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ url_for('index') }}">VulnM</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" href="/vulnerabilities">Twoje zasoby</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/getFalsePositive">False positives</a>
+          </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for('getUsers')}}">Konsultacje</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{url_for('getConsultingsOpen')}}"></a>
+            </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            </a>
+          </li>
+        </ul>
+        <div class="d-flex justify-content-end">
+              <span>Zalogowany jako: {{ current_user.user_name}} ({{current_user.role}})</span>
+        </div>
+        <div class="d-flex justify-content-end">
+            <a style="margin-left: 10px;" class="btn btn-outline-danger" href="{{url_for('logout')}}">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  

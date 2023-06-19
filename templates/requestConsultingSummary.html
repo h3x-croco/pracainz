@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+<div class="alert alert-success" role="alert">
+    <b>Zgłoszenie konsultacji poprawne!</b>
+  </div>
+{% block content %}
+
+  <div class="alert alert-success" role="alert">
+    <h4 class="alert-heading">Dobra robota!</h4>
+    <p><b>Zgłoszenie zostało wysłane poprawnie! </b>Teraz konsultanci muszą zweryfikować zasadność Twojego zgłoszenia. Jeżeli będzie to konieczne, konsultant wyśle zaproszenie na dodatkowe spotkanie.
+    </p>
+    <hr>
+    <p class="mb-0">Obecnie Twojego zgłoszenie na status: <b>Otwarte</b></p>
+  </div>
+
+<br/>
+<br/>
+<div class="row">
+    <div class="col-4">
+    </div>
+    <div class="col-4">
+        <h3>Podsumowanie:</h3>
+        <br/>
+            <div class="mb-3">
+                <b>Nazwa hosta: </b>
+                <p>{{ host }}</p>
+            </div>
+            <div class="mb-3">
+                <b>Tytuł: </b> 
+                <p>{{ title }}</p>
+            </div>
+            <div class="mb-3">
+                <b>Komentarz: </b>
+                <p>{{ comment }}</p>
+            <div class="mb-3"></div>
+            <div class="d-grid gap-2">
+                <b>Data utworzenia: </b>
+                <p>{{ create_time }}</p>
+            </div>
+            </div>
+    </div>
+</div>
+
+{% endblock %}
