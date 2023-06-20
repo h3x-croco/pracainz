@@ -2,14 +2,13 @@
 
 {% block content %}
 
-<a href="/getConsultings/open" class="btn btn-primary me-md-2" type="button">Otwarte</a>
-<a href="/getConsultings/myconsultation" class="btn btn-outline-success me-md-2" type="button">Moje konsultacje</a>
+<a href="/getConsultings/open" class="btn btn-outline-primary me-md-2" type="button">Otwarte</a>
+<a href="/getConsultings/myconsultation" class="btn btn-success me-md-2" type="button">Moje konsultacje</a>
 
 <br/>
 <br/>
-<h4>Lista zgłoszonych konsultacji</h4>
+<h4>Moje konsultacje</h4>
 <br/>
-
 
 
 
@@ -44,14 +43,14 @@
             <td>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <a href="/getConsultings/{{id}}" class="btn btn-primary me-md-2" type="button">Szczegóły</a>
-                    <form action="{{ url_for('consultingAssignToMeForm', title=title, host=host)}}" method="POST">
+                    <form action="{{ url_for('consultingChangeStatusForm', title=title, host=host)}}" method="POST">
                         <input type="hidden" name="id" value='{{ id }}'>
                         <input type="hidden" name="title" value='{{ title }}'>
                         <input type="hidden" name="host" value='{{ host }}'>
                         <input type="hidden" name="host" value='{{ owner }}'>
                         <input type="hidden" name="host" value='{{ status }}'>
-                        <button class="btn btn-success" type="submit">Przypisz do mnie</button>
-                    </form>                                      
+                        <button class="btn btn-warning" type="submit">Zmien status</button>
+                    </form>                                   
                 </div>
             </td>
         </tr>
@@ -60,4 +59,3 @@
 </table>
 
 {% endblock %}
-

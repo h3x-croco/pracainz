@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h1>Szczegóły konsultacji</h1>
+    <br>Nazwa zasobu: {{ all_consultings[0][1] }}
+    <br>Tytul: {{ all_consultings[0][2] }}
+    <br>Data zgloszenia: {{ all_consultings[0][4] }}
+    <br>Status: {{ all_consultings[0][5] }}
+    <br>Zglosil: {{ all_consultings[0][6] }}
+    <br>Komentarz: {{ all_consultings[0][3] }}
+
+
+
+{% endblock %}

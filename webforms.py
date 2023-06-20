@@ -25,12 +25,11 @@ class ConsultingForm(FlaskForm):
 
 # Form to add new vulnerability
 class ReportVulnForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired()])
-    proof = StringField('Proof', validators=[DataRequired()])
-    solution = StringField('Solution', validators=[DataRequired()])
-    host = StringField('Host', validators=[DataRequired()])
-    status_id = StringField('Status', validators=[DataRequired()])
-    discovety_time = StringField('Discvovery time', validators=[DataRequired()])
+    title = StringField('Tytuł', validators=[DataRequired()])
+    host = StringField('Nazwa zasobu', validators=[DataRequired()])
+    description = StringField('Opis', validators=[DataRequired()])
+    proof = StringField('Dowód', validators=[DataRequired()])
+    solution = StringField('Potencjalne rozwiązanie', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 # Form to login page
@@ -95,3 +94,20 @@ class UserRejectForm(FlaskForm):
     id = IntegerField('ID: ', validators=[DataRequired()])
     email = StringField('E-mail: ', validators=[DataRequired()])
     submit = SubmitField('Odrzuć użytkownika')
+
+
+# Formularz do przypisania zgloszonej konsultacji do konsultanta
+class AssignToMeForm(FlaskForm):
+    id = IntegerField('ID: ', validators=[DataRequired()])
+    title = StringField('Tytuł:', validators=[DataRequired()])
+    host = StringField('Nazwa hosta:', validators=[DataRequired()])
+    submit = SubmitField('Przypisz zgłoszenie')
+
+
+# Formularz do przypisania zgloszonej konsultacji do konsultanta
+class ChangeStatusForm(FlaskForm):
+    id = IntegerField('ID: ', validators=[DataRequired()])
+    title = StringField('Tytuł:', validators=[DataRequired()])
+    host = StringField('Nazwa hosta:', validators=[DataRequired()])
+    status = SelectField('Status: ', choices=[('Zweryfikowana', 'Zweryfikowana'), ('Oczekuje na akceptacje od wlasciciela', 'Oczekuje na akceptacje od wlasciciela'), ('Oczekuje na konsultacje', 'Oczekuje na konsultacje'), ('Weryfikowanie po stronie wlasciciela', 'Weryfikowanie po stronie wlasciciela'), ('Zamknieta', 'Zamknieta')])
+    submit = SubmitField('Zmien status')

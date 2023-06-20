@@ -5,7 +5,7 @@ import json
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user, login_manager
-from webforms import FalsePositiveForm, ReportVulnForm, LoginForm, RegisterFrom, FalsePositiveForm, FalsePositiveAcceptForm, FalsePositiveRejectForm, UserAcceptForm, UserRejectForm, ConsultingForm
+from webforms import FalsePositiveForm, ReportVulnForm, LoginForm, RegisterFrom, FalsePositiveForm, FalsePositiveAcceptForm, FalsePositiveRejectForm, UserAcceptForm, UserRejectForm, ConsultingForm, AssignToMeForm, ChangeStatusForm
 from functools import wraps
 from flask import abort
 
@@ -33,24 +33,12 @@ def load_user(user_id):
 @app.cli.command()
 
 
-# Tylko dla adminów
 
-
-
-
-
-
-
-
-
-
-
-
-
-@app.route('/test', methods=['GET', 'POST'])
+@app.route('/vulnerabilities/', methods=['GET', 'POST'])
 @login_required
-def test():
+def vulnerabilities():
     user = current_user.user_name
+    cve = 'CVE%'
     conn = psycopg2.connect(host='localhost', port='5432', database='cmdb', user='postgres', password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
     cur = conn.cursor()
     select_asset_for_user = """SELECT asset_owner.email, asset.hostname 
@@ -72,19 +60,20 @@ WHERE asset_owner.email =%s;"""
     cursor = connection.cursor()
     print("Polaczenie do bazy danych ")
     param_placeholders = ','.join(['%s'] * len(values))
-    postgres_insert_query = """SELECT VULNS_FOUND.asset_id, ASSET.host_name, SOLUTION.summary, VULN.title, VULN.severity, VULN.cvss_score
+    postgres_insert_query = """SELECT VULNS_FOUND.asset_id, ASSET.host_name, SOLUTION.summary, VULN.title, VULN.severity, VULN.cvss_score, VULN.vulnerability_id
 FROM fact_asset_vulnerability_instance AS VULNS_FOUND
 INNER JOIN dim_asset AS ASSET ON ASSET.asset_id=VULNS_FOUND.asset_id
 INNER JOIN dim_vulnerability AS VULN ON VULNS_FOUND.vulnerability_id=VULN.vulnerability_id
 INNER JOIN dim_vulnerability_solution ON dim_vulnerability_solution.vulnerability_id=VULN.vulnerability_id
-INNER JOIN dim_solution AS SOLUTION ON SOLUTION.solution_id=dim_vulnerability_solution.solution_id WHERE ASSET.host_name IN ({})""".format(param_placeholders)
+INNER JOIN dim_solution AS SOLUTION ON SOLUTION.solution_id=dim_vulnerability_solution.solution_id 
+WHERE ASSET.host_name IN ({}); """.format(param_placeholders)
 
     cursor.execute(postgres_insert_query, values)
     results = cursor.fetchall()
 	#print(results)
     grouped_data = {}
     for row in results:
-        asset_id, host_name, summary, title, severity, cvss_score = row
+        asset_id, host_name, summary, title, severity, cvss_score, vulnerability_id = row
         if host_name not in grouped_data:
             grouped_data[host_name] = []
         grouped_data[host_name].append({
@@ -92,7 +81,8 @@ INNER JOIN dim_solution AS SOLUTION ON SOLUTION.solution_id=dim_vulnerability_so
 		"summary": summary,
 		"title": title,
 		"severity": severity,
-		"cvss_score": cvss_score
+		"cvss_score": cvss_score,
+        "vulnerability_id": vulnerability_id
 		})
     json_data = json.dumps(grouped_data)
     data = json.loads(json_data)
@@ -105,8 +95,33 @@ INNER JOIN dim_solution AS SOLUTION ON SOLUTION.solution_id=dim_vulnerability_so
     connection.commit()
     cursor.close()
     connection.close()
-    return render_template('test.html', user=user, data=data)
+    return render_template('vulnerabilities.html', user=user, data=data)
 
+
+
+# Route to page with details about specific vulnerability
+@app.route('/vulnerabilities/<id>')
+@login_required
+def get_internal_vulnerability(id):
+    conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='nexpose',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+    cursor = conn.cursor()
+    postgres_query = """SELECT VULNS_FOUND.asset_id, ASSET.host_name, SOLUTION.summary, VULN.title, VULN.severity, VULN.cvss_score, VULN.vulnerability_id 
+FROM fact_asset_vulnerability_instance AS VULNS_FOUND
+INNER JOIN dim_asset AS ASSET ON ASSET.asset_id=VULNS_FOUND.asset_id
+INNER JOIN dim_vulnerability AS VULN ON VULNS_FOUND.vulnerability_id=VULN.vulnerability_id
+INNER JOIN dim_vulnerability_solution ON dim_vulnerability_solution.vulnerability_id=VULN.vulnerability_id
+INNER JOIN dim_solution AS SOLUTION ON SOLUTION.solution_id=dim_vulnerability_solution.solution_id 
+WHERE VULN.vulnerability_id=%s;"""
+    cursor.execute(postgres_query, [id])
+    vulnerability = cursor.fetchall()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return render_template("vulnerability.html", vulnerability=vulnerability)
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])
@@ -288,18 +303,6 @@ def requestConsultingSummary():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 @app.route('/getConsultings/open', methods=['GET', 'POST'])
 @login_required
 def getConsultingsOpen():
@@ -319,21 +322,136 @@ def getConsultingsOpen():
     return render_template('getConsultingsOpen.html', all_consultings=all_consultings)
 
 
+@app.route('/getConsultings/<id>', methods=['GET', 'POST'])
+@login_required
+def getConsultingsDetails(id):
+    conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='vulnmapp',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+    cursor = conn.cursor()
+    # Statusy: 0 - Open (some action to do), 1- Accepted, 2 - Rejected
+    select_consultings = """SELECT * FROM consultings WHERE id=%s"""
+    cursor.execute(select_consultings, [id])
+    all_consultings = cursor.fetchall()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return render_template('getConsultingsDetails.html', all_consultings=all_consultings)
+
+
+@app.route('/getConsultings/myconsultation', methods=['GET', 'POST'])
+@login_required
+def getConsultingsUser():
+    user = current_user.user_name
+    conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='vulnmapp',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+    cursor = conn.cursor()
+    # Statusy: 0 - Open (some action to do), 1- Accepted, 2 - Rejected
+    select_consultings = """SELECT * FROM consultings WHERE assigned_to=%s"""
+    cursor.execute(select_consultings, [user])
+    all_consultings = cursor.fetchall()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return render_template('getConsultingsUser.html', all_consultings=all_consultings)
 
 
 
+@app.route('/getConsultings/assignToMeForm', methods=['GET', 'POST'])
+@login_required
+def consultingAssignToMeForm():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        host = request.form.get('host')
+        form = AssignToMeForm()
+        if form.validate_on_submit():
+            title = form.title.data
+            host = form.host.data
+            return render_template("consultingAssignToMeForm.html", 
+                               form=form, title=title, host=host)
+        return render_template("consultingAssignToMeForm.html", form=form,
+                               title=title, host=host)
+    return render_template("consultingAssignToMeForm.html", form=form, title=title,
+                            host=host)
 
 
+# Do DB ma isc aktualizacja przypisanej osoby
+@app.route('/getConsultings/assignToMeForm/summary', methods=['GET', 'POST'])
+@login_required
+def consultingAssignToMeFormSummary():
+    if request.method == 'POST':
+        id = request.form.get('id')
+        title = request.form.get('title')
+        host = request.form.get('host')
+        comment = request.form.get('comment')
+        owner = request.form.get('owner')
+        status = 0
+        time = datetime.now()
+        create_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        # Baza danych
+        conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='vulnmapp',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+        cursor = conn.cursor()
+        update_query_consulting = """ UPDATE consultings SET status='Przypisana', assigned_to=%s WHERE id=%s;"""
+        data_to_update = (current_user.user_name, id)
+        cursor.execute(update_query_consulting, data_to_update)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return render_template("consultingAssignToMeFormSummary.html", title=title, host=host, status=status)
+    return render_template("consultingAssignToMeFormSummary.html")
 
 
+@app.route('/getConsultings/changeStatusForm', methods=['GET', 'POST'])
+@login_required
+def consultingChangeStatusForm():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        host = request.form.get('host')
+        form = ChangeStatusForm()
+        if form.validate_on_submit():
+            title = form.title.data
+            host = form.host.data
+            return render_template("consultingChangeStatusForm.html", 
+                               form=form, title=title, host=host)
+        return render_template("consultingChangeStatusForm.html", form=form,
+                               title=title, host=host)
+    return render_template("consultingChangeStatusForm.html", form=form, title=title,
+                            host=host)
+
+@app.route('/getConsultings/changeStatusForm/summary', methods=['GET', 'POST'])
+@login_required
+def consultingChangeStatusFormSummary():
+    if request.method == 'POST':
+        id = request.form.get('id')
+        title = request.form.get('title')
+        host = request.form.get('host')
+        status = request.form.get('status')
+        # Baza danych
+        conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='vulnmapp',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+        cursor = conn.cursor()
+        update_query_consulting = """ UPDATE consultings SET status=%s WHERE id=%s;"""
+        data_to_update = (status, id)
+        cursor.execute(update_query_consulting, data_to_update)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return render_template("consultingChangeStatusFormSummary.html", title=title, host=host, status=status)
+    return render_template("consultingChangeStatusFormSummary.html")
 
 
-
-
-# Strona z miejscem do wprowadzenia komentarza
-# dlaczego jest to false positive
-# host i title są pobierane z poprzedniej strony
-# pola host i title są już niezmienialne dla usera
 @app.route('/reportFalsePositive', methods=['GET', 'POST'])
 @login_required
 def reportFalsePositive():
@@ -351,7 +469,6 @@ def reportFalsePositive():
                                title=title, host=host)
     return render_template("reportFalsePositive.html", form=form, title=title,
                             host=host, comment=comment)
-
 
 
 
@@ -395,7 +512,6 @@ def getFalsePositive():
                                 user='postgres',
                                 password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
     cursor = conn.cursor()
-    # Statusy: 0 - Open (some action to do), 1- Accepted, 2 - Rejected
     select_falsePositive = """SELECT * FROM falsepositive;"""
     cursor.execute(select_falsePositive)
     all_false_positive = cursor.fetchall()
@@ -560,54 +676,61 @@ def getFalsePositiveAcceptFormSummary():
 @app.route("/getFalsePositive/reject/summary", methods=['GET', 'POST'])
 @login_required
 def getFalsePositiveRejectFormSummary():
-    return render_template('xxx.html')
-
-
-# Route to page with details about specific vulnerability
-@app.route('/vulnerabilities/<id>')
-@login_required
-def get_internal_vulnerability(id):
-    conn = psycopg2.connect(host='localhost',
-                                port='5432',
-                                database='internal',
-                                user='postgres',
-                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
-    cursor = conn.cursor()
-    select_vulnerability = """SELECT * FROM vulnerability WHERE id = %s;"""
-    cursor.execute(select_vulnerability, [id])
-    vulnerability = cursor.fetchall()
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return render_template("vulnerability.html", vulnerability=vulnerability)
-
-
-
-@app.route('/vulnerabilities/', methods=['GET', 'POST'])
-@login_required
-def get_internal_vulnerabilities():
-    # zasymulowane dane z nazwami hostów - będą one wyciągane z bazy danych
-    hosts = ('HVMWAW65411', 'HVMWAW65435', 'HVMWAW65993')
-    conn = psycopg2.connect(host='localhost',
+    if request.method == 'POST':
+        title = request.form.get('title')
+        host = request.form.get('host')
+        comment = request.form.get('comment')
+        id = request.form.get('id')
+        status = 1
+        time = datetime.now()
+        last_update = time.strftime("%Y-%m-%d %H:%M:%S")
+        # Baza danych
+        conn = psycopg2.connect(host='localhost',
                                 port='5432',
                                 database='vulnmapp',
                                 user='postgres',
                                 password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
-    cursor = conn.cursor()
-    select_vulnerabilities = """SELECT * FROM consultings;"""
-    cursor.execute(select_vulnerabilities)
-    vulnerabilities = cursor.fetchall()
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return render_template("vulnerabilities.html", vulnerabilities=vulnerabilities, hosts=hosts)
-
+        cursor = conn.cursor()
+        update_query_falsepositive = """UPDATE public.falsepositive SET status=2, comment_consultant=%s, last_update=%s WHERE id = %s;"""
+        data_to_insert = (comment, last_update, id)
+        cursor.execute(update_query_falsepositive, data_to_insert)
+        conn.commit()
+        cursor.close()
+        conn.close()
+    return render_template('getFalsePositiveRejectFormSummary.html', 
+                           title=title, host=host,comment=comment,
+                             id=id, status=status, create_time=last_update)
 
 
 @app.route('/vulnerabilities/vulnerability/add/summary', methods=['GET', 'POST'])
 @login_required
 def vuln_add_summary():
-    return render_template('vuln_add_summary.html')
+    if request.method == 'POST':
+        title = request.form.get('title')
+        host = request.form.get('host')
+        description = request.form.get('description')
+        proof = request.form.get('proof')
+        solution = request.form.get('solution')       
+        status = 0
+        time = datetime.now()
+        discovery_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        user = current_user.id
+        # Baza danych
+        conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='vulnmapp',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+        cursor = conn.cursor()
+        update_query_falsepositive = """  INSERT INTO public.internal_vulnerability(
+	title, hostname, description, proof, solution, discovery_time, status, user_id)
+	VALUES (%s, %s, %s, %s, %s, %s, %s, %s); """
+        data_to_insert = (title, host, description, proof, solution, discovery_time, status, user)
+        cursor.execute(update_query_falsepositive, data_to_insert)
+        conn.commit()
+        cursor.close()
+        conn.close()
+    return render_template('vuln_add_summary.html', data_to_insert=data_to_insert)
 
 
 
@@ -615,28 +738,7 @@ def vuln_add_summary():
 @login_required
 def vuln_report():
     form = ReportVulnForm()
-    if form.validate_on_submit():
-        title = form.title.data
-        proof = form.proof.data
-        solution = form.solution.data
-        discovery_time = datetime.now()
-        host = form.host.data
-        status_id = 1
-        # Wyczyść formularz
-        form.title.data = ''
-        form.proof.data = ''
-        form.solution.data = ''
-        form.host.data = ''
-        form.status_id.data = ''
-        form.discovery_time.data = ''
-        # flash("Form submitted successfully")
-        return redirect(url_for('vuln_report'))
-    # Przypisz wartości do formularza, jeśli przesłano dane
-    title = request.args.get('title', '')
-    host = request.args.get('host', '')
-    proof = request.args.get('proof', '')
-    solution = request.args.get('solution', '')
-    return render_template('form_vulnerability.html', form=form, title=title, host=host, proof=proof, solution=solution)
+    return render_template('form_vulnerability.html', form=form)
 
 
 # Wyświetlenie wszystkich użytkowników
@@ -777,10 +879,42 @@ def getUsersDetails(id):
         return render_template("getUsersDetails.html", user=user)
 
 
+@app.route('/getUsers/consultants', methods=['GET', 'POST'])
+@login_required
+def getUsersConsultants():
+    conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='vulnmapp',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+    cursor = conn.cursor()
+    # Statusy: 0 - Open (some action to do), 1- Accepted, 2 - Rejected
+    select_users = """SELECT * FROM users WHERE role='consultant';"""
+    cursor.execute(select_users)
+    all_get_users = cursor.fetchall()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return render_template('getUsersConsultants.html', all_get_users=all_get_users)
 
 
-
-
+@app.route('/getUsers/admins', methods=['GET', 'POST'])
+@login_required
+def getUsersAdmins():
+    conn = psycopg2.connect(host='localhost',
+                                port='5432',
+                                database='vulnmapp',
+                                user='postgres',
+                                password='ZKApUMahTLoHyqkMvJovBpyvw2KWQe')
+    cursor = conn.cursor()
+    # Statusy: 0 - Open (some action to do), 1- Accepted, 2 - Rejected
+    select_users = """SELECT * FROM users WHERE role='admin';"""
+    cursor.execute(select_users)
+    all_get_users = cursor.fetchall()
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return render_template('getUsersAdmins.html', all_get_users=all_get_users)
 
 
 

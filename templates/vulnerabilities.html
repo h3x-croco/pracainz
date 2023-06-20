@@ -3,54 +3,50 @@
 {% block content %}
     <h1>List Twoich zasobów</h1>
     <br/>
-    {% for host in hosts %}
+    {% for key, value in data.items() %}
         <div class="accordion" id="accordionPanelsStayOpenExample">
             <div class="accordion-item">
               <h2 class="accordion-header">
-                <button class="btn btn-success" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target=#{{host}} aria-expanded="true" aria-controls={{host}}>
-                  {{ host }}
+                <button class="btn btn-success" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target=#{{key}} aria-expanded="true" aria-controls={{host}}>
+                  {{ key }}
                 </button>
               </h2>
-              <div id={{host}} class="accordion-collapse collapse show">
+              <div id={{key}} class="accordion-collapse collapse show">
                 <div class="accordion-body">
                     <table class="table">
                         <thead>
                         <tr>
                             <th scope="col">#</th>
-                            <th scope="col">Nazwa zasobu</th>
                             <th scope="col">Podatność</th>
                             <th scope="col">Priorytet</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {% for vuln in vulnerabilities %}
-                            {% set id = vuln[0] %}
-                            {% set title = vuln[1] %}
+                        {% for item in value %}
                             <tr>
-                                <th scope="row">{{ vuln[0] }}</th>
-                                <td>{{ title|truncate(20) }}</td>
-                                <td>{{ vuln[2] }}</td>
-                                {% if id == 3 %}
-                                <td><button type="button" class="btn btn-outline-danger">Wysoki</button></td>
+                                <th scope="row">{{ item.vulnerability_id }}</th>
+                                <td>{{ item.title }}</td>
+                                {% if item.cvss_score < 4 %}
+                                <td><button type="button" class="btn btn-outline-success">Niski</button></td>
                                 {% endif %}
-                                {% if id == 1 %}
-                                <td><button type="button" class="btn btn-outline-danger">Niski</button></td>
-                                {% endif %}
-                                {% if id == 2 %}
+                                {% if item.cvss_score >= 4 and item.cvss_score < 7 %}
                                 <td><button type="button" class="btn btn-outline-warning">Średni</button></td>
+                                {% endif %}
+                                {% if item.cvss_score >= 7  %}
+                                <td><button type="button" class="btn btn-outline-danger">Wysoki</button></td>
                                 {% endif %}
 
                                 <td>
                                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                        <a href="/vulnerabilities/{{id}}" class="btn btn-primary me-md-2" type="button">Szczegóły</a>
-                                        <form action="{{ url_for('requestConsulting', title=vuln, host=host)}}" method="POST">
-                                            <input type="hidden" name="title" value='{{ title }}'>
-                                            <input type="hidden" name="host" value='{{ host }}'>
+                                        <a href="/vulnerabilities/{{item.vulnerability_id}}" class="btn btn-primary me-md-2" type="button">Szczegóły</a>
+                                        <form action="{{ url_for('requestConsulting', title=item, key=key)}}" method="POST">
+                                            <input type="hidden" name="title" value='{{ item.title }}'>
+                                            <input type="hidden" name="host" value='{{ key }}'>
                                             <button class="btn btn-secondary" type="submit">Konsultacja</button>
                                         </form>
-                                        <form action="{{ url_for('reportFalsePositive', title=vuln, host=host)}}" method="POST">
-                                            <input type="hidden" name="title" value='{{ title }}'>
-                                            <input type="hidden" name="host" value='{{ host }}'>
+                                        <form action="{{ url_for('reportFalsePositive', title=item, key=key)}}" method="POST">
+                                            <input type="hidden" name="title" value='{{ item.title }}'>
+                                            <input type="hidden" name="host" value='{{ key }}'>
                                             <button class="btn btn-danger" type="submit">False positive</button>
                                         </form>                                        
                                     </div>

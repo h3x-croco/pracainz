@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br/>
+<h3 class="text-center">Formularz przypisania zgłoszenia</h3>
+<br/>
+<br/>
+<br/>
+<div class="row">
+    <div class="col-4">
+    </div>
+    <div class="col-4">
+        <form action="{{ url_for('consultingAssignToMeFormSummary', id=id, title=title, host=host, status=status, create_time=create_time)}}" method="POST" >
+            <div class="mb-3">
+                <b>{{ form.id.label }}</b>
+                {{ form.id(class="form-control-plaintext") }}
+            </div>
+            <div class="mb-3">
+                <b>{{ form.title.label }}</b>
+                {{ form.title(class="form-control-plaintext") }}
+            </div>
+            <div class="mb-3">
+                <b>{{ form.host.label }}</b>
+                {{ form.host(class="form-control-plaintext") }}
+            </div>
+            <div class="mb-3"></div>
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-success") }}
+            </div>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+
+{% endblock %}
